@@ -46,6 +46,7 @@ class DataModel {
     
     func loadChecklists() {
         let path = dataFilePath()
+        print(path)
         // check if file exists (no file when app loads for the first time)
         if NSFileManager.defaultManager().fileExistsAtPath(path) {
             if let data = NSData(contentsOfFile: path) {
