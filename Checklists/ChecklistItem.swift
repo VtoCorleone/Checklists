@@ -7,39 +7,48 @@
 //
 
 import Foundation
+import UIKit
 
 // NSObject is used for comparisons and NSCoding is used to serialize and save the data
 class ChecklistItem: NSObject, NSCoding {
+
+    /*
+        MARK: - Variables
+    */
+    
+    let TEXT = "Text"
+    let CHECKED = "Checked"
+    let DUEDATE = "DueDate"
+    let SHOULDREMIND = "ShouldRemind"
+    let ITEMID = "ItemId"
+    
     var text = ""
     var checked = false
     var dueDate = NSDate()
     var shouldRemind = false
     var itemId: Int
     
-//    init (text: String, checked: Bool) {
-//        self.text = text
-//        self.checked = checked
-//    }
+    /*
+        MARK: - Life cycle
+    */
     
     override init() {
         itemId = DataModel.nextChecklistItemID()
         super.init()
     }
     
-    
-    
-    func toggleChecked() {
-        checked = !checked
+    // this is called when an object is about to be deleted
+    deinit {
+        if let notification = notificationForThisItem() {
+            print("Removing existing notification \(notification)")
+            UIApplication.sharedApplication().cancelLocalNotification(notification)
+        }
     }
     
     /*
-        PROTOCOL METHODS
+        MARK: - Protocol methods
     */
-    let TEXT = "Text"
-    let CHECKED = "Checked"
-    let DUEDATE = "DueDate"
-    let SHOULDREMIND = "ShouldRemind"
-    let ITEMID = "ItemId"
+    
     func encodeWithCoder(aCoder: NSCoder) {
         aCoder.encodeObject(text, forKey: TEXT)
         aCoder.encodeBool(checked, forKey: CHECKED)
@@ -56,4 +65,46 @@ class ChecklistItem: NSObject, NSCoding {
         itemId = aDecoder.decodeIntegerForKey(ITEMID)
         super.init()
     }
+    
+    /*
+        MARK: - Methods
+    */
+    
+    func toggleChecked() {
+        checked = !checked
+    }
+    
+    func scheduleNotification() {
+        let existingNotification = notificationForThisItem()
+        if let notification = existingNotification {
+            print("Found an existing notification \(notification)")
+            UIApplication.sharedApplication().cancelLocalNotification(notification)
+        }
+        
+        if shouldRemind && dueDate.compare(NSDate()) != .OrderedAscending {
+            let localNotification = UILocalNotification()
+            localNotification.fireDate = dueDate
+            localNotification.timeZone = NSTimeZone.defaultTimeZone()
+            localNotification.alertBody = text
+            localNotification.soundName = UILocalNotificationDefaultSoundName
+            // add to userInfo dictionary in case you need to cancel it later
+            localNotification.userInfo = [ITEMID: itemId]
+            
+            UIApplication.sharedApplication().scheduleLocalNotification(localNotification)
+            
+            print("Scheduled notification \(localNotification) for itemId \(itemId)")
+        }
+    }
+    
+    func notificationForThisItem() -> UILocalNotification? {
+        let allNotifications = UIApplication.sharedApplication().scheduledLocalNotifications!
+        
+        for notification in allNotifications {
+            if let number = notification.userInfo?[ITEMID] as? Int where number == itemId {
+                return notification
+            }
+        }
+        return nil
+    }
+    
 }
