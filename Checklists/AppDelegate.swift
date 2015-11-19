@@ -26,6 +26,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
     }
 
+    // saves when app goes in background
     func applicationDidEnterBackground(application: UIApplication) {
         saveData()
     }
@@ -38,13 +39,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     }
 
+    // saves when app terminates
     func applicationWillTerminate(application: UIApplication) {
         saveData()
     }
 
-    
+
     func saveData() {
         dataModel.saveChecklists()
     }
+    
+    func application(application: UIApplication, didReceiveLocalNotification notification: UILocalNotification) {
+        print("didReceiveLocalNotification \(notification)") }
 }
 
